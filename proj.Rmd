@@ -1,0 +1,66 @@
+---
+title: "proj.Rmd"
+author: Bill Anderson
+output: html_document
+---
+
+The goal of this study was to examine how well certain exercises were performed based on data from personal fitness devices and to create a predictive model. I tried several different models, including a regression model, a gradient boost model, and a random forest model. The random forest model was the most accurate so I used it for the remainder of the study. 
+
+Several different percentages of data were allocated to the training (and the rest to the validation) data frame from the "pml-training.csv" file and I found that an accuracy greater than 99% was obtainable when 70% of the data was allocated to the training data frame. Here are the results from the training steps.
+
+```{r}
+library(caret)
+set.seed(12347)
+
+#
+# read in the data
+#
+df_orig <- read.csv("/Users/andersnb/coursera/data-science-specialization/machine-learning/pml-training.csv")
+
+#
+# ignore columns with NAs, blanks, etc., and only use ones with meaningful
+# values
+#
+df_subset <- df_orig[, c("roll_belt", "pitch_belt", "yaw_belt", "total_accel_belt", "gyros_belt_x", "gyros_belt_y", "gyros_belt_z", "accel_belt_x", "accel_belt_y", "accel_belt_z", "magnet_belt_x", "magnet_belt_y", "magnet_belt_z", "roll_arm", "pitch_arm", "yaw_arm", "total_accel_arm", "gyros_arm_x", "gyros_arm_y", "gyros_arm_z", "accel_arm_x", "accel_arm_y", "accel_arm_z", "magnet_arm_x", "magnet_arm_y", "magnet_arm_z", "roll_dumbbell", "pitch_dumbbell", "yaw_dumbbell", "total_accel_dumbbell", "gyros_dumbbell_x", "gyros_dumbbell_y", "gyros_dumbbell_z", "accel_dumbbell_x", "accel_dumbbell_y", "accel_dumbbell_z", "magnet_dumbbell_x", "magnet_dumbbell_y", "magnet_dumbbell_z", "roll_forearm", "pitch_forearm", "yaw_forearm", "total_accel_forearm", "gyros_forearm_x", "gyros_forearm_y", "gyros_forearm_z", "accel_forearm_x", "accel_forearm_y", "accel_forearm_z", "magnet_forearm_x", "magnet_forearm_y", "magnet_forearm_z", "classe" )]
+
+#
+# partition the data into training and validation subsets
+#
+in_training <- createDataPartition(y=df_subset$classe, p=0.70, list=FALSE)
+df_training <- df_subset[in_training, ]
+df_validation <- df_subset[-in_training, ]
+
+#
+# create a random forest model, with cross-validation options
+#
+mod <- train(classe ~ ., method="rf", data=df_training, trControl=trainControl(method="cv"), number=3)
+mod
+varImp(mod)
+```
+Next, I estimated the out of sample error with the following commands and found that the error estimate was slightly higher than 99%. 
+
+```{r}
+validation_predictions <- predict(mod, df_training)
+confusionMatrix(validation_predictions, df_training$classe)
+```
+Finally, I generated predictions for the test dataset and found that they matched the answers. 
+
+```{r}
+#
+# read in the data
+#
+df_test <- read.csv("/Users/andersnb/coursera/data-science-specialization/machine-learning/pml-testing.csv")
+
+#
+# obtain columns/variables of interest (matching what was used in the 
+# training data frame)
+#
+df_test_subset <- df_test[, c("roll_belt", "pitch_belt", "yaw_belt", "total_accel_belt", "gyros_belt_x", "gyros_belt_y", "gyros_belt_z", "accel_belt_x", "accel_belt_y", "accel_belt_z", "magnet_belt_x", "magnet_belt_y", "magnet_belt_z", "roll_arm", "pitch_arm", "yaw_arm", "total_accel_arm", "gyros_arm_x", "gyros_arm_y", "gyros_arm_z", "accel_arm_x", "accel_arm_y", "accel_arm_z", "magnet_arm_x", "magnet_arm_y", "magnet_arm_z", "roll_dumbbell", "pitch_dumbbell", "yaw_dumbbell", "total_accel_dumbbell", "gyros_dumbbell_x", "gyros_dumbbell_y", "gyros_dumbbell_z", "accel_dumbbell_x", "accel_dumbbell_y", "accel_dumbbell_z", "magnet_dumbbell_x", "magnet_dumbbell_y", "magnet_dumbbell_z", "roll_forearm", "pitch_forearm", "yaw_forearm", "total_accel_forearm", "gyros_forearm_x", "gyros_forearm_y", "gyros_forearm_z", "accel_forearm_x", "accel_forearm_y", "accel_forearm_z", "magnet_forearm_x", "magnet_forearm_y", "magnet_forearm_z"  )]
+
+#
+# perform the predictions
+#
+pred <- predict(mod, df_test_subset)
+pred
+```
+
