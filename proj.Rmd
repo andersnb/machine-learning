@@ -40,8 +40,8 @@ varImp(mod)
 Next, I estimated the out of sample error with the following commands and found that the error estimate was slightly higher than 99%. 
 
 ```{r}
-validation_predictions <- predict(mod, df_training)
-confusionMatrix(validation_predictions, df_training$classe)
+validation_predictions <- predict(mod, df_validation)
+confusionMatrix(validation_predictions, df_validation$classe)
 ```
 Finally, I generated predictions for the test dataset and found that they matched the answers. 
 
